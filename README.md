@@ -4,6 +4,8 @@
 
 Este script implementa una metodología multifuente para estimar la **humedad del suelo (Soil Moisture, SM)** utilizando datos satelitales y variables topográficas en un periodo multianual.
 
+Visor Geografico link:  https://api-project-732156244341.projects.earthengine.app/view/soil-moisture-index
+
 El modelo combina información de:
 
 - Radar (Sentinel-1)
@@ -140,7 +142,7 @@ Incluye variables y coordenadas.
 
 ## 🚀 Uso
 
-1. Cargar script en GEE
+1. Cargar script en GEE   https://code.earthengine.google.com/d8be564a00eff55d3072ceda751f3f6a
 2. Verificar assets
 3. Ejecutar
 4. Exportar resultados
