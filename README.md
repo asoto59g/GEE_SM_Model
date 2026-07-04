@@ -161,3 +161,4 @@ Incluye variables y coordenadas.
 - Calibración con campo
 - Machine Learning
 - Integración climática
+## Se adjunta un Jupyter Notebook y archivo script javascript GEE code.
