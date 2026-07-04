@@ -1,7 +1,30 @@
 // =====================================================
 //1. DATOS
 // =====================================================
-var puntos = ee.FeatureCollection("projects/ee-oasotob/assets/ptsmuestreo");
+var puntos = ee.FeatureCollection("projects/ee-oasotob/assets/PtsSM").map(function(feature) {
+  function formatVal(field, label) {
+    var value = feature.get(field);
+    return ee.String(ee.Algorithms.If(
+      ee.Algorithms.IsEqual(value, null),
+      ee.String(label).cat('NA'),
+      ee.String(ee.Algorithms.If(
+        ee.Algorithms.IsEqual(value, ''),
+        ee.String(label).cat('NA'),
+        ee.String(label).cat(ee.Number(value).format('%.2f'))
+      ))
+    ));
+  }
+
+  return feature.set({
+    'SM2020': formatVal('val2020', 'SM2020='),
+    'SM2021': formatVal('val2021', 'SM2021='),
+    'SM2022': formatVal('val2022', 'SM2022='),
+    'SM2023': formatVal('val2023', 'SM2023='),
+    'SM2024': formatVal('val2024', 'SM2024='),
+    'SM2025': formatVal('val2025', 'SM2025='),
+    'SM2026': formatVal('val2026', 'SM2026=')
+  });
+});
 var years = ee.List.sequence(2020, 2026);
 var region = puntos.geometry().buffer(5000);
 
@@ -102,9 +125,9 @@ var coleccion = ee.ImageCollection.fromImages(
 // 6. VISUALIZACIÓN
 // =====================================================
 var vis = {
-  min: 0,
-  max: 1,
-  palette: ['brown','yellow','blue']
+  min: 0.15,
+  max: 0.43178,
+  palette: ['#d7191c', '#e85b3b', '#f99d59', '#fec980', '#ffedaa', '#ecf7b9', '#c7e8ad', '#9dd3a6', '#64abb0', '#2b83ba']
 };
 
 var img2024 = coleccion.filter(ee.Filter.eq('year', 2024)).first();
@@ -119,7 +142,6 @@ years.getInfo().forEach(function(year) {
 });
 Map.centerObject(puntos, 9);
 // Map.addLayer(img2024.select('SM_final'), vis, 'Humedad avanzada 2024');
-Map.addLayer(puntos, {color:'black'}, 'Puntos');
 
 
 
@@ -172,9 +194,9 @@ Export.table.toDrive({
   description: 'SM_Experto_FINAL',
   fileFormat: 'CSV'
 });
-// =====================================================
+// ===============================
 // 10. EXPORTAR MAPAS POR AÑO (TASKS)
-// =====================================================
+// ===============================
 
 years.getInfo().forEach(function(year) {
 
@@ -194,165 +216,70 @@ years.getInfo().forEach(function(year) {
   });
 
 });
-// ===============================
-// 11. CARGAR DATOS
-// ===============================
-var pts = ee.FeatureCollection('projects/ee-oasotob/assets/PtsSMb'); // <-- CAMBIAR
-
-Map.centerObject(pts, 10);
 
 // ===============================
-// 12. CONFIGURACIÓN
+// 11. CARGAR DATOS DE PUNTOS
 // ===============================
-var years = ee.List([
-  'val2020', 'val2021', 'val2022',
-  'val2023', 'val2024', 'val2025', 'val2026'
-]);
-
-// 🔥 ESCALA AJUSTADA (VISIBLE)
-var scaleX = ee.Number(0.01);
-var maxBarHeight = ee.Number(0.02);
-var barWidth = ee.Number(0.005);
-
-// Colores
-var colors = ee.List([
-  '#1f77b4', '#2ca02c', '#ff7f0e',
-  '#d62728', '#9467bd', '#8c564b', '#000000'
-]);
+Map.centerObject(puntos, 10);
+Map.addLayer(puntos, {color: 'black'}, 'Puntos');
 
 // ===============================
-// 13. MAX GLOBAL (CORREGIDO)
-// ===============================
-var maxList = ee.List(
-  pts.reduceColumns({
-    reducer: ee.Reducer.max().repeat(years.length()),
-    selectors: years
-  }).get('max')
-);
-
-// 🔥 valor único global
-var maxGlobal = ee.Number(maxList.reduce(ee.Reducer.max()));
-
-print('Max global:', maxGlobal);
-
-// ===============================
-// 14. FUNCIÓN CREAR GRÁFICOS
-// ===============================
-var createChart = function(feature) {
-
-  var coords = feature.geometry().coordinates();
-  var lon = ee.Number(coords.get(0));
-  var lat = ee.Number(coords.get(1));
-
-  // 🔥 OFFSET para separar del punto
-  var baseLon = lon.add(0.01);
-
-  // =======================
-  // EJE BASE
-  // =======================
-  var baseLine = ee.Geometry.Rectangle([
-    baseLon,
-    lat,
-    baseLon.add(scaleX.multiply(years.length())),
-    lat.add(ee.Number(0.0005))
-  ]);
-
-  var baseFeature = ee.Feature(baseLine).set({
-    style: {
-      color: 'black',
-      fillColor: 'black'
-    }
-  });
-
-  // =======================
-  // BARRAS
-  // =======================
-  var bars = ee.FeatureCollection(
-    ee.List.sequence(0, years.length().subtract(1)).map(function(i) {
-
-      i = ee.Number(i);
-      var attr = years.get(i);
-
-      var value = ee.Number(
-        ee.Algorithms.If(
-          feature.get(attr),
-          feature.get(attr),
-          0
-        )
-      );
-
-      // 🔥 NORMALIZACIÓN (VISIBLE)
-      var height = value.sqrt()
-        .divide(maxGlobal.sqrt())
-        .multiply(maxBarHeight);
-
-      var xOffset = i.multiply(scaleX);
-
-      var rect = ee.Geometry.Rectangle([
-        baseLon.add(xOffset),
-        lat,
-        baseLon.add(xOffset).add(barWidth),
-        lat.add(height)
-      ]);
-
-      return ee.Feature(rect).set({
-        style: {
-          color: colors.get(i),
-          fillColor: colors.get(i),
-          width: 1
-        }
-      });
-    })
-  );
-
-  return bars.merge(ee.FeatureCollection([baseFeature]));
-};
-
-// ===============================
-// 15. GENERAR
-// ===============================
-var allBars = pts.map(createChart).flatten();
-
-// ===============================
-// 16. VISUALIZACIÓN
-// ===============================
-Map.addLayer(allBars.style({
-  styleProperty: 'style'
-}), {}, 'Barras PRO visibles');
-
-Map.addLayer(pts, {color: 'black'}, 'Puntos');
-
-// ===============================
-// 17. LEYENDA
+// LEYENDA DE COLORES
 // ===============================
 var legend = ui.Panel({
   style: {
     position: 'bottom-left',
-    padding: '8px'
+    padding: '8px',
+    backgroundColor: 'white',
+    width: 'auto',
+    minWidth: '140px'
   }
 });
 
-legend.add(ui.Label('Años', {fontWeight: 'bold'}));
+legend.add(ui.Label('Soil Moisture Index', {fontWeight: 'bold', fontSize: '10px'}));
 
-var yearsList = years.getInfo();
-var colorsList = colors.getInfo();
+var legendItems = [
+  {color: '#d7191c', label: '<= 0.15'},
+  {color: '#e85b3b', label: '0.15 - 0.2476'},
+  {color: '#f99d59', label: '0.2476 - 0.2838'},
+  {color: '#fec980', label: '0.2838 - 0.3092'},
+  {color: '#ffedaa', label: '0.3092 - 0.3302'},
+  {color: '#ecf7b9', label: '0.3302 - 0.3497'},
+  {color: '#c7e8ad', label: '0.3497 - 0.3697'},
+  {color: '#9dd3a6', label: '0.3697 - 0.3933'},
+  {color: '#64abb0', label: '0.3933 - 0.4318'},
+  {color: '#2b83ba', label: '> 0.4318'}
+];
 
-yearsList.forEach(function(y, i) {
-  legend.add(
-    ui.Panel([
-      ui.Label('', {
-        backgroundColor: colorsList[i],
-        padding: '8px',
-        margin: '0 4px 0 0'
-      }),
-      ui.Label(y)
-    ], ui.Panel.Layout.Flow('horizontal'))
-  );
+legendItems.forEach(function(item) {
+  var row = ui.Panel([
+    ui.Label('', {
+      backgroundColor: item.color,
+      padding: '8px',
+      margin: '0 6px 0 0'
+    }),
+    ui.Label(item.label, {fontSize: '8px'})
+  ], ui.Panel.Layout.Flow('horizontal'));
+  legend.add(row);
 });
 
 Map.add(legend);
 
+var titlePanel = ui.Panel({
+  style: {
+    position: 'bottom-center',
+    padding: '6px 10px',
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    textAlign: 'center'
+  }
+});
+
+titlePanel.add(ui.Label('Guanacaste Humedad del Suelo', {fontWeight: 'bold', fontSize: '12px'}));
+titlePanel.add(ui.Label('15 marzo-04 abril 2020-2026', {fontSize: '10px'}));
+
+Map.add(titlePanel);
+
 // ===============================
 // DEBUG
 // ===============================
-print('Primer feature:', pts.first());
+print('Primer feature:', puntos.first());
