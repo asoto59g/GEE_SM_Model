@@ -148,32 +148,50 @@ var smapCollection = ee.ImageCollection.fromImages(
 // 6. VISUALIZACIÓN
 // =====================================================
 var vis = {
-  min: 0.15,
-  max: 0.43178,
+  min: 0,
+  max: 1,
   palette: ['#d7191c', '#e85b3b', '#f99d59', '#fec980', '#ffedaa', '#ecf7b9', '#c7e8ad', '#9dd3a6', '#64abb0', '#2b83ba']
 };
 
-var img2024 = coleccion.filter(ee.Filter.eq('year', 2024)).first();
-years.getInfo().forEach(function(year) {
+var smapVis = {
+  min: 0,
+  max: 1,
+  palette: ['#d7191c', '#e85b3b', '#f99d59', '#fec980', '#ffedaa', '#ecf7b9', '#c7e8ad', '#9dd3a6', '#64abb0', '#2b83ba']
+};
 
-  var smapImg = smapCollection
-    .filter(ee.Filter.eq('year', year))
-    .first();
+var yearSelector = ui.Select({
+  items: years.getInfo().map(function(y) { return y.toString(); }),
+  value: '2026',
+  placeholder: 'Seleccionar año',
+  onChange: updateMapYear
+});
 
-  Map.addLayer(smapImg.select('SMAP'), {
-    min: 0,
-    max: 0.5,
-    palette: ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#3182bd', '#08519c']
-  }, 'SMAP ' + year);
+function updateMapYear(year) {
+  if (!year) return;
+  var selectedYear = parseInt(year, 10);
+  Map.layers().reset();
 
-  var img = coleccion
-    .filter(ee.Filter.eq('year', year))
-    .first();
+  var smapImg = smapCollection.filter(ee.Filter.eq('year', selectedYear)).first();
+  Map.addLayer(smapImg.select('SMAP'), smapVis, 'SMAP ' + year);
 
+  var img = coleccion.filter(ee.Filter.eq('year', selectedYear)).first();
   Map.addLayer(img.select('SM_final'), vis, 'SM ' + year);
 
+  Map.addLayer(puntos, {color: 'black'}, 'Puntos');
+  Map.centerObject(puntos, 9);
+}
+
+var selectorPanel = ui.Panel([
+  ui.Label('Año de visualización'),
+  yearSelector
+], ui.Panel.Layout.Flow('vertical'), {
+  position: 'top-right',
+  padding: '8px',
+  backgroundColor: 'ffffffcc'
 });
+Map.add(selectorPanel);
 Map.setOptions('HYBRID');
+updateMapYear('2026');
 Map.centerObject(puntos, 9);
 // Map.addLayer(img2024.select('SM_final'), vis, 'Humedad avanzada 2024');
 

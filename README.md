@@ -4,8 +4,6 @@
 
 Este script implementa una metodología multifuente para estimar la **humedad del suelo (Soil Moisture, SM)** utilizando datos satelitales y variables topográficas en un periodo multianual, con resolución 10 x 10 metros.
 
-Vinculo de Visor Geografico:  https://api-project-732156244341.projects.earthengine.app/view/soil-moisture-index
-
 El modelo se ejecuta en Earth Engine sobre el asset de puntos de muestreo:
 
 - `projects/ee-oasotob/assets/PtsSM`
@@ -121,12 +119,8 @@ SM = (SAR * 0.5)
 ### 8. 🗺️ Visualización
 
 - Se agregan primero las capas `SM` y luego las capas `SMAP`
-- Paleta `SM`:
-  - Rojo / marrón → bajo
-  - Amarillo → medio
-  - Azul → alto
-- Paleta `SMAP`:
-  - Azul claro → azul oscuro
+- Paleta unificada para `SM` y `SMAP` con rango normalizado común: **0 – 1**
+- En el script se utiliza un selector de año para cargar solo el año seleccionado, lo que reduce significativamente el tiempo de despliegue de capas
 
 - Se mantiene una capa de puntos de muestreo y un panel de leyenda permanente en el script
 
