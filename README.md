@@ -160,7 +160,7 @@ SM = (SAR * 0.5)
 
 ## 🚀 Uso
 
-1. Cargar script en GEE
+1. Cargar script en GEE  https://code.earthengine.google.com/ac293e2c083a0c138c92ef8a74598322
 2. Verificar assets
 3. Ejecutar
 4. Exportar resultados
