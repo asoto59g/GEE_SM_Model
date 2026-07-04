@@ -16,7 +16,7 @@ Los puntos representan la ubicación aproximada, con un error estimado de hasta 
 
 - Yeomans, Ken B.; Yeomans, P.A.(dec.). *Water for Every Farm - Yeomans Keyline Plan* (English Edition)
 
-Y agrega capas de humedad del suelo y humedad superficial SMAP para cada año.
+Y agrega capas de humedad del suelo y humedad superficial SMAP para cada año, en un intento de ver el impacto de la tecnologia en las parcelas demostrativas.
 
 El resultado es un índice normalizado de humedad del suelo en el rango **[0 – 1]**, donde:
 
