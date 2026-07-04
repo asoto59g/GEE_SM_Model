@@ -2,15 +2,13 @@
 
 ## 📌 Descripción general
 
-Este script implementa una metodología multifuente para estimar la **humedad del suelo (Soil Moisture, SM)** utilizando datos satelitales y variables topográficas en un periodo multianual, con resolucion 10 x 10 metros.
+Este script implementa una metodología multifuente para estimar la **humedad del suelo (Soil Moisture, SM)** utilizando datos satelitales y variables topográficas en un periodo multianual, con resolución 10 x 10 metros.
 
-Visor Geografico link:  https://api-project-732156244341.projects.earthengine.app/view/soil-moisture-index
+El modelo se ejecuta en Earth Engine sobre el asset de puntos de muestreo:
 
-El modelo combina información de:
+- `projects/ee-oasotob/assets/PtsSM`
 
-- Radar (Sentinel-1)
-- Óptico (Sentinel-2)
-- Topografía (SRTM)
+Y agrega capas de humedad del suelo y humedad superficial SMAP para cada año.
 
 El resultado es un índice normalizado de humedad del suelo en el rango **[0 – 1]**, donde:
 
@@ -29,6 +27,7 @@ La estimación de humedad se basa en la integración de variables físicas relac
 | NDMI | Sentinel-2 | Contenido de agua en vegetación |
 | NDVI | Sentinel-2 | Cobertura vegetal |
 | Pendiente | SRTM | Influye en escorrentía |
+| SMAP | NASA SMAP | Humedad superficial satelital |
 
 ---
 
@@ -59,13 +58,13 @@ La estimación de humedad se basa en la integración de variables físicas relac
   - Modo IW
   - Órbita descendente
 - Aplicación de filtro speckle:
-  focal_mean (30 m)
+  `focal_mean` (30 m)
 
 - Cálculo:
   SAR = (VV + VH) / 2
 
 - Normalización:
-  SAR → [0 – 1] usando unitScale(-20, 0)
+  SAR → [0 – 1] usando `unitScale(-20, 0)`
 
 ---
 
@@ -96,7 +95,16 @@ SM = (SAR * 0.5)
 
 ---
 
-### 6. 📅 Análisis multianual
+### 6. 🌊 Integración SMAP
+
+- Fuente: `NASA/SMAP/SPL4SMGP/008`
+- Banda: `sm_surface`
+- Normalización: `unitScale(0, 0.5)`
+- Salida: `SMAP` en rango [0,1]
+
+---
+
+### 7. 📅 Análisis multianual
 
 - Se ejecuta el modelo para cada año (2020–2026)
 - Ventana temporal fija:
@@ -104,35 +112,41 @@ SM = (SAR * 0.5)
 
 ---
 
-### 7. 🗺️ Visualización
+### 8. 🗺️ Visualización
 
-- Paleta:
-  - Marrón → seco
-  - Amarillo → intermedio
-  - Azul → húmedo
+- Se agregan primero las capas `SM` y luego las capas `SMAP`
+- Paleta `SM`:
+  - Rojo / marrón → bajo
+  - Amarillo → medio
+  - Azul → alto
+- Paleta `SMAP`:
+  - Azul claro → azul oscuro
+
+- Se mantiene una capa de puntos de muestreo y un panel de leyenda permanente en el script
 
 ---
 
-### 8. 📈 Serie temporal
+### 9. 📈 Serie temporal
 
-Se genera un gráfico con la evolución temporal de la humedad.
+- Se genera un gráfico de serie temporal para `SM_final`
+- Reducer: media sobre la región de puntos
 
 ---
 
-### 9. 📍 Muestreo espacial
+### 10. 📍 Muestreo espacial
 
-- Extracción de valores en puntos
-- Atributos:
+- Extracción de valores de `SM_final` en los puntos
+- Atributos exportados:
   - Año
   - Latitud
   - Longitud
 
 ---
 
-### 10. 💾 Exportaciones
+### 11. 💾 Exportaciones
 
 #### 📊 CSV
-Incluye variables y coordenadas.
+- Exporta la tabla de puntos muestreados como CSV
 
 #### 🗺️ Mapas
 - Resolución: 10 m
@@ -142,7 +156,7 @@ Incluye variables y coordenadas.
 
 ## 🚀 Uso
 
-1. Cargar script en GEE   https://code.earthengine.google.com/d8be564a00eff55d3072ceda751f3f6a
+1. Cargar script en GEE
 2. Verificar assets
 3. Ejecutar
 4. Exportar resultados
@@ -153,6 +167,7 @@ Incluye variables y coordenadas.
 
 - Modelo semi-empírico
 - Sensible a condiciones atmosféricas
+- SMAP se usa como referencia adicional, no como parte del índice primario
 
 ---
 
@@ -161,7 +176,10 @@ Incluye variables y coordenadas.
 - Calibración con campo
 - Machine Learning
 - Integración climática
-  
+
 ---
 
-## Se adjunta un Jupyter Notebook y archivo script javascript GEE code.
+## Archivos incluidos
+
+- `Soil_Moisture_Index.js` — script principal de Earth Engine
+- `GEE_SM_Model.ipynb` — notebook adaptado con el flujo del modelo y visualización

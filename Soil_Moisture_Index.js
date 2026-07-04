@@ -114,11 +114,34 @@ function modelo(year) {
            });
 }
 
+function modeloSMAP(year) {
+  year = ee.Number(year);
+  var start = ee.Date.fromYMD(year, 3, 15);
+  var end = ee.Date.fromYMD(year, 4, 8);
+
+  var smap = ee.ImageCollection('NASA/SMAP/SPL4SMGP/008')
+    .filterDate(start, end)
+    .filterBounds(region)
+    .select('sm_surface')
+    .mean()
+    .unitScale(0, 0.5)
+    .clamp(0, 1)
+    .rename('SMAP');
+
+  return smap.set({
+    'year': year,
+    'system:time_start': start.millis()
+  });
+}
+
 // =====================================================
 // 5. COLECCIÓN MULTIANUAL
 // =====================================================
 var coleccion = ee.ImageCollection.fromImages(
   years.map(modelo)
+);
+var smapCollection = ee.ImageCollection.fromImages(
+  years.map(modeloSMAP)
 );
 
 // =====================================================
@@ -138,6 +161,19 @@ years.getInfo().forEach(function(year) {
     .first();
 
   Map.addLayer(img.select('SM_final'), vis, 'SM ' + year);
+
+});
+years.getInfo().forEach(function(year) {
+
+  var smapImg = smapCollection
+    .filter(ee.Filter.eq('year', year))
+    .first();
+
+  Map.addLayer(smapImg.select('SMAP'), {
+    min: 0,
+    max: 0.5,
+    palette: ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#3182bd', '#08519c']
+  }, 'SMAP ' + year);
 
 });
 Map.centerObject(puntos, 9);
