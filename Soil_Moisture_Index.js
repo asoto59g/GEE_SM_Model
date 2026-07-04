@@ -156,15 +156,6 @@ var vis = {
 var img2024 = coleccion.filter(ee.Filter.eq('year', 2024)).first();
 years.getInfo().forEach(function(year) {
 
-  var img = coleccion
-    .filter(ee.Filter.eq('year', year))
-    .first();
-
-  Map.addLayer(img.select('SM_final'), vis, 'SM ' + year);
-
-});
-years.getInfo().forEach(function(year) {
-
   var smapImg = smapCollection
     .filter(ee.Filter.eq('year', year))
     .first();
@@ -174,6 +165,12 @@ years.getInfo().forEach(function(year) {
     max: 0.5,
     palette: ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#3182bd', '#08519c']
   }, 'SMAP ' + year);
+
+  var img = coleccion
+    .filter(ee.Filter.eq('year', year))
+    .first();
+
+  Map.addLayer(img.select('SM_final'), vis, 'SM ' + year);
 
 });
 Map.centerObject(puntos, 9);

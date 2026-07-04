@@ -8,6 +8,10 @@ El modelo se ejecuta en Earth Engine sobre el asset de puntos de muestreo:
 
 - `projects/ee-oasotob/assets/PtsSM`
 
+Los puntos representan la ubicación aproximada, con un error estimado de hasta 100 metros, de parcelas del Proyecto Líneas de Infiltración impulsado por la empresa Agricien con el apoyo de la Federación de Cámaras de Ganaderos de Guanacaste y el Ministerio de Agricultura. Este proyecto busca disminuir los impactos de la sequía y utiliza conceptos desarrollados en el libro:
+
+- Yeomans, Ken B.; Yeomans, P.A.(dec.). *Water for Every Farm - Yeomans Keyline Plan* (English Edition)
+
 Y agrega capas de humedad del suelo y humedad superficial SMAP para cada año.
 
 El resultado es un índice normalizado de humedad del suelo en el rango **[0 – 1]**, donde:
