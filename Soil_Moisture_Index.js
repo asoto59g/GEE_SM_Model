@@ -173,6 +173,7 @@ years.getInfo().forEach(function(year) {
   Map.addLayer(img.select('SM_final'), vis, 'SM ' + year);
 
 });
+Map.setOptions('HYBRID');
 Map.centerObject(puntos, 9);
 // Map.addLayer(img2024.select('SM_final'), vis, 'Humedad avanzada 2024');
 
